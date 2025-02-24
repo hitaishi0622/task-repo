@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials') // Store Docker Hub credentials in Jenkins
+        DOCKER_IMAGE_NAME = "hitaishi0622/nginx-app"
+        DOCKER_IMAGE_TAG = "latest"
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -8,32 +14,27 @@ pipeline {
             }
         }
 
-        stage('Compile Java Code') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'javac Test.java' // Compile the Java file
+                    sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ."
                 }
             }
         }
 
-        stage('Run Java Code') {
+        stage('Push to Docker Hub') {
             steps {
                 script {
-                    sh 'java Test' // Run the compiled Java class
+                    sh "echo ${DOCKER_HUB_CREDENTIALS_PSW} | docker login -u ${DOCKER_HUB_CREDENTIALS_USR} --password-stdin"
+                    sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy NGINX') {
             steps {
                 script {
-                     echo 'Deploying the application...'
-                    // Example: Copy files to a remote server using SCP
-                    sh 'scp Test.class user@remote-server:/path/to/destination/'
-                    
-                    // Example: Run a deployment script on the remote server
-                    sh 'ssh user@remote-server "cd /path/to/destination/ && ./deploy.sh"'
-                }
+                    sh "docker-compose down && docker-compose up -d" // Use Docker Compose to deploy NGINX
                 }
             }
         }
@@ -41,10 +42,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline succeeded!'
+            echo 'Pipeline succeeded! NGINX is deployed.'
         }
         failure {
-            echo 'Pipeline failed!'
+            echo 'Pipeline failed! Check the logs for errors.'
         }
     }
 }
