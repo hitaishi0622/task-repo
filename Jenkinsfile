@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials') // Store Docker Hub credentials in Jenkins
-        DOCKER_IMAGE_NAME = "hitaishi0622/nginx-app"
+        DOCKER_IMAGE_NAME = "your-dockerhub-username/nginx-app"
         DOCKER_IMAGE_TAG = "latest"
     }
 
